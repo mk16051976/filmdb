@@ -86,16 +86,6 @@ $ratingLeaders        = $communityData['ratingLeaders'];
 // ── Laufende Aktionen ──────────────────────────────────────────────────────
 $activeActions = [];
 try {
-    $db->exec("CREATE TABLE IF NOT EXISTS action_lists (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(200) NOT NULL, description TEXT NULL,
-        start_date DATE NOT NULL, end_date DATE NOT NULL,
-        created_by INT UNSIGNED NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->exec("CREATE TABLE IF NOT EXISTS action_list_films (
-        list_id INT UNSIGNED NOT NULL, movie_id INT UNSIGNED NOT NULL,
-        PRIMARY KEY (list_id, movie_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $stmt = $db->query("
         SELECT al.id, al.name, al.description, al.start_date, al.end_date,
                COUNT(DISTINCT alf.movie_id) AS film_count

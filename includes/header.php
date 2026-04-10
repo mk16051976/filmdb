@@ -29,7 +29,7 @@ if ($loggedIn) {
 }
 
 // ── DB-Migrationen: nur einmal pro Server ausführen (Flag-Datei) ──────────────
-$_hdrMigFlag = dirname(__DIR__, 2) . '/cache/db_migration_v4.flag';
+$_hdrMigFlag = dirname(__DIR__, 2) . '/cache/db_migration_v5.flag';
 if (!file_exists($_hdrMigFlag)) {
     try {
         $_hdrMigDb = getDB();
@@ -53,6 +53,66 @@ if (!file_exists($_hdrMigFlag)) {
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, conv_id INT UNSIGNED NOT NULL, sender_id INT UNSIGNED NOT NULL,
             body TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, read_at TIMESTAMP NULL,
             INDEX idx_conv (conv_id, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        // Ranglisten-Tabellen
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS user_position_ranking (
+            user_id INT NOT NULL, movie_id INT NOT NULL, position INT UNSIGNED NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, movie_id), INDEX idx_user_pos (user_id, position)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS tournament_results (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, tournament_id INT UNSIGNED NOT NULL,
+            user_id INT UNSIGNED NOT NULL, movie_id INT UNSIGNED NOT NULL,
+            wins SMALLINT UNSIGNED NOT NULL DEFAULT 0, matches_played SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+            score FLOAT NOT NULL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user (user_id), INDEX idx_tournament (tournament_id),
+            UNIQUE KEY uq_tm (tournament_id, movie_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS liga_sessions (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL,
+            film_count SMALLINT UNSIGNED NOT NULL, status ENUM('active','completed') NOT NULL DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, INDEX idx_user (user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        try { $_hdrMigDb->exec("ALTER TABLE liga_sessions ADD COLUMN IF NOT EXISTS media_type VARCHAR(10) NOT NULL DEFAULT 'movie'"); } catch (\PDOException $e) {}
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS liga_matches (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, liga_id INT UNSIGNED NOT NULL,
+            movie_a_id INT UNSIGNED NOT NULL, movie_b_id INT UNSIGNED NOT NULL,
+            winner_id INT UNSIGNED NULL, voted_at TIMESTAMP NULL,
+            INDEX idx_liga_pending (liga_id, winner_id),
+            UNIQUE KEY uq_pair (liga_id, movie_a_id, movie_b_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS sort_sessions (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL,
+            film_count SMALLINT UNSIGNED NOT NULL, status ENUM('active','completed') NOT NULL DEFAULT 'active',
+            state JSON NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user_status (user_id, status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        try { $_hdrMigDb->exec("ALTER TABLE sort_sessions ADD COLUMN IF NOT EXISTS media_type VARCHAR(10) NOT NULL DEFAULT 'movie'"); } catch (\PDOException $e) {}
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS jgj_pool (
+            user_id INT UNSIGNED NOT NULL, movie_id INT UNSIGNED NOT NULL,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (user_id, movie_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS jgj_results (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL,
+            movie_a_id INT UNSIGNED NOT NULL, movie_b_id INT UNSIGNED NOT NULL,
+            winner_id INT UNSIGNED NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user (user_id), UNIQUE KEY uq_match (user_id, movie_a_id, movie_b_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS action_lists (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(200) NOT NULL,
+            description TEXT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL,
+            created_by INT UNSIGNED NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS action_list_films (
+            list_id INT UNSIGNED NOT NULL, movie_id INT UNSIGNED NOT NULL,
+            PRIMARY KEY (list_id, movie_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $_hdrMigDb->exec("CREATE TABLE IF NOT EXISTS action_list_rankings (
+            list_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL,
+            movie_id INT UNSIGNED NOT NULL, position INT UNSIGNED NOT NULL,
+            wins INT UNSIGNED NOT NULL DEFAULT 0, losses INT UNSIGNED NOT NULL DEFAULT 0,
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (list_id, user_id, movie_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $_hdrMigDb->exec("ALTER TABLE users   ADD COLUMN IF NOT EXISTS last_seen DATETIME NULL DEFAULT NULL");
         $_hdrMigDb->exec("ALTER TABLE movies ADD COLUMN IF NOT EXISTS title_en       VARCHAR(255) NULL DEFAULT NULL");

@@ -6,29 +6,6 @@ requireLogin();
 $userId = (int)$_SESSION['user_id'];
 $db     = getDB();
 
-// ── Ensure tables exist ────────────────────────────────────────────────────────
-$db->exec("CREATE TABLE IF NOT EXISTS user_position_ranking (
-    user_id  INT NOT NULL,
-    movie_id INT NOT NULL,
-    position INT UNSIGNED NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, movie_id),
-    INDEX idx_user_pos (user_id, position)
-)");
-
-$db->exec("CREATE TABLE IF NOT EXISTS tournament_results (
-    id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    tournament_id  INT UNSIGNED NOT NULL,
-    user_id        INT UNSIGNED NOT NULL,
-    movie_id       INT UNSIGNED NOT NULL,
-    wins           SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    matches_played SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    score          FLOAT NOT NULL DEFAULT 0,
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_user (user_id),
-    INDEX idx_tournament (tournament_id),
-    UNIQUE KEY uq_tm (tournament_id, movie_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 // ── Aktiver Tab (früh setzen, steuert welche Queries laufen) ──────────────────
 $activeTab = $_GET['tab'] ?? 'persoenlich';
@@ -98,25 +75,6 @@ if ($activeTab === 'turnier' || ($isCsvExport && ($_GET['tab'] ?? '') === 'turni
 $ligaRanking  = [];
 $latestLigaId = null;
 
-$db->exec("CREATE TABLE IF NOT EXISTS liga_sessions (
-    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id    INT UNSIGNED NOT NULL,
-    film_count SMALLINT UNSIGNED NOT NULL,
-    status     ENUM('active','completed') NOT NULL DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-$db->exec("ALTER TABLE liga_sessions ADD COLUMN IF NOT EXISTS media_type VARCHAR(10) NOT NULL DEFAULT 'movie'");
-$db->exec("CREATE TABLE IF NOT EXISTS liga_matches (
-    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    liga_id    INT UNSIGNED NOT NULL,
-    movie_a_id INT UNSIGNED NOT NULL,
-    movie_b_id INT UNSIGNED NOT NULL,
-    winner_id  INT UNSIGNED NULL,
-    voted_at   TIMESTAMP NULL,
-    INDEX idx_liga_pending (liga_id, winner_id),
-    UNIQUE KEY uq_pair (liga_id, movie_a_id, movie_b_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
 // Badge: check if a completed liga session exists (cheap)
 $stmt = $db->prepare("SELECT id, film_count FROM liga_sessions WHERE user_id = ? AND status = 'completed' AND media_type = ? ORDER BY created_at DESC LIMIT 1");
@@ -151,16 +109,6 @@ $sortRankingFilms = [];
 $latestSortId     = null;
 $latestSortDate   = null;
 
-$db->exec("CREATE TABLE IF NOT EXISTS sort_sessions (
-    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id    INT UNSIGNED NOT NULL,
-    film_count SMALLINT UNSIGNED NOT NULL,
-    status     ENUM('active','completed') NOT NULL DEFAULT 'active',
-    state      JSON NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_user_status (user_id, status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-$db->exec("ALTER TABLE sort_sessions ADD COLUMN IF NOT EXISTS media_type VARCHAR(10) NOT NULL DEFAULT 'movie'");
 
 // Sort session: always fetch header row (cheap, 1 row, no JSON decode yet)
 $stmt = $db->prepare("SELECT id, film_count, created_at FROM sort_sessions
@@ -236,17 +184,6 @@ $jgjTotal    = 0;
 $jgjPoolSet  = [];
 $jgjRankMap  = [];
 try {
-    $db->exec("CREATE TABLE IF NOT EXISTS jgj_pool (
-        user_id  INT UNSIGNED NOT NULL, movie_id INT UNSIGNED NOT NULL,
-        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (user_id, movie_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->exec("CREATE TABLE IF NOT EXISTS jgj_results (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        user_id INT UNSIGNED NOT NULL, movie_a_id INT UNSIGNED NOT NULL,
-        movie_b_id INT UNSIGNED NOT NULL, winner_id INT UNSIGNED NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_user (user_id), UNIQUE KEY uq_match (user_id, movie_a_id, movie_b_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // Badge-Count immer (cheap, gefiltert nach Medientyp)
     $s = $db->prepare("SELECT COUNT(*) FROM jgj_pool p JOIN movies m ON m.id = p.movie_id WHERE p.user_id = ?" . seriesSqlFilter('m') . moviesSqlFilter('m'));
@@ -287,19 +224,6 @@ try {
 $myActionLists      = [];
 $myActionListCount  = 0;
 try {
-    $db->exec("CREATE TABLE IF NOT EXISTS action_lists (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(200) NOT NULL, description TEXT NULL,
-        start_date DATE NOT NULL, end_date DATE NOT NULL,
-        created_by INT UNSIGNED NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->exec("CREATE TABLE IF NOT EXISTS action_list_rankings (
-        list_id INT UNSIGNED NOT NULL, user_id INT UNSIGNED NOT NULL,
-        movie_id INT UNSIGNED NOT NULL, position INT UNSIGNED NOT NULL,
-        wins INT UNSIGNED NOT NULL DEFAULT 0, losses INT UNSIGNED NOT NULL DEFAULT 0,
-        completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (list_id, user_id, movie_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // Badge-Count immer (cheap)
     $s = $db->prepare("SELECT COUNT(DISTINCT list_id) FROM action_list_rankings WHERE user_id=?");

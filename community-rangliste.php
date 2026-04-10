@@ -7,15 +7,6 @@ $db        = getDB();
 $userId    = (int)$_SESSION['user_id'];
 $activeTab = in_array($_GET['tab'] ?? '', ['jgj', 'jgj_weighted', 'aktionen']) ? $_GET['tab'] : 'ranking';
 
-// ── Ensure table exists ────────────────────────────────────────────────────────
-$db->exec("CREATE TABLE IF NOT EXISTS user_position_ranking (
-    user_id  INT NOT NULL,
-    movie_id INT NOT NULL,
-    position INT UNSIGNED NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, movie_id),
-    INDEX idx_user_pos (user_id, position)
-)");
 
 // ── Tab: Community Meine-Rangliste ─────────────────────────────────────────────
 $communityRanking = [];
@@ -46,16 +37,6 @@ if ($activeTab === 'ranking') {
     }
 
     try {
-        $db->exec("CREATE TABLE IF NOT EXISTS sort_sessions (
-            id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            user_id    INT UNSIGNED NOT NULL,
-            film_count SMALLINT UNSIGNED NOT NULL,
-            status     ENUM('active','completed') NOT NULL DEFAULT 'active',
-            state      JSON NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_user_status (user_id, status)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
         $ssStmt = $db->prepare("SELECT state FROM sort_sessions
             WHERE user_id = ? AND status = 'completed' ORDER BY created_at DESC LIMIT 1");
         $ssStmt->execute([$userId]);

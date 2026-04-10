@@ -15,12 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_j
     $filmId = (int)($_POST['film_id'] ?? 0);
     if (!$filmId) { echo json_encode(['ok' => false, 'error' => 'invalid']); exit; }
     try {
-        $db->exec("CREATE TABLE IF NOT EXISTS jgj_pool (
-            user_id  INT UNSIGNED NOT NULL,
-            movie_id INT UNSIGNED NOT NULL,
-            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (user_id, movie_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $db->prepare("INSERT IGNORE INTO jgj_pool (user_id, movie_id) VALUES (?, ?)")
            ->execute([$userId, $filmId]);
         $ps = $db->prepare("SELECT COUNT(*) FROM jgj_pool WHERE user_id = ?");
@@ -32,15 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_j
     exit;
 }
 
-// Ensure table exists before querying
-$db->exec("CREATE TABLE IF NOT EXISTS user_position_ranking (
-    user_id  INT NOT NULL,
-    movie_id INT NOT NULL,
-    position INT UNSIGNED NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, movie_id),
-    INDEX idx_user_pos (user_id, position)
-)");
 
 $stmt = $db->prepare("
     SELECT upr.position,
