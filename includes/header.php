@@ -29,7 +29,7 @@ if ($loggedIn) {
 }
 
 // ── DB-Migrationen: nur einmal pro Server ausführen (Flag-Datei) ──────────────
-$_hdrMigFlag = dirname(__DIR__, 2) . '/cache/db_migration_v5.flag';
+$_hdrMigFlag = __DIR__ . '/../cache/db_migration_v5.flag';
 if (!file_exists($_hdrMigFlag)) {
     try {
         $_hdrMigDb = getDB();
@@ -129,7 +129,7 @@ if (!file_exists($_hdrMigFlag)) {
         try { $_hdrMigDb->exec("ALTER TABLE movies ADD INDEX idx_media_type (media_type)"); } catch (\PDOException $e) {}
         try { $_hdrMigDb->exec("ALTER TABLE user_tournaments ADD INDEX idx_status_user (status, user_id)"); } catch (\PDOException $e) {}
         try { $_hdrMigDb->exec("ALTER TABLE users ADD INDEX idx_community_excluded (community_excluded)"); } catch (\PDOException $e) {}
-        @mkdir(dirname($_hdrMigFlag), 0755, true);
+        if (!is_dir(dirname($_hdrMigFlag))) @mkdir(dirname($_hdrMigFlag), 0755, true);
         @file_put_contents($_hdrMigFlag, date('c'));
     } catch (\PDOException $e) { /* Spalten evtl. schon vorhanden */ }
 }

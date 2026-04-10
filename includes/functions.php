@@ -1196,8 +1196,8 @@ function dbCache(string $key, callable $fn, int $ttl = 300): mixed {
         apcu_store($key, $val, $ttl);
         return $val;
     }
-    // Fallback: Datei-Cache außerhalb Webroot
-    $dir  = dirname(__DIR__, 2) . '/cache';
+    // Fallback: Datei-Cache im cache/-Verzeichnis unterhalb Webroot
+    $dir  = __DIR__ . '/../cache';
     if (!is_dir($dir)) @mkdir($dir, 0755, true);
     $file = $dir . '/' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $key) . '.cache';
     if (file_exists($file) && (time() - filemtime($file)) < $ttl) {
@@ -1212,7 +1212,7 @@ function dbCache(string $key, callable $fn, int $ttl = 300): mixed {
 /** Cache-Eintrag manuell invalidieren (z.B. nach Datenmutation) */
 function dbCacheDelete(string $key): void {
     if (function_exists('apcu_delete')) { apcu_delete($key); return; }
-    $dir  = dirname(__DIR__, 2) . '/cache';
+    $dir  = __DIR__ . '/../cache';
     $file = $dir . '/' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $key) . '.cache';
     if (file_exists($file)) @unlink($file);
 }
