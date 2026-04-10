@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.themoviedb.org)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"c:\\\\xampp2\\\\htdocs\\\\filmdb\\\\fix_addslashes2.ps1\")"
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+# Sensible Zugangsdaten – niemals einchecken!
+config/secrets.php
+.env
+
+# Uploads – Benutzerdaten, nicht im Repo
+uploads/
+
+# Cache-Dateien
+/php.ini
+
+# Logs
+*.log
+logs/
+
+# Cover-Bilder (groß, extern gepflegt)
+cover/
+
+# IDE / OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# XAMPP lokal
+/tmp/

@@ -1,0 +1,45 @@
+User-agent: *
+
+# Öffentliche Seiten erlauben
+Allow: /$
+Allow: /index.php
+Allow: /das-projekt.php
+Allow: /features.php
+Allow: /news.php
+Allow: /impressum.php
+Allow: /login.php
+Allow: /register.php
+Allow: /demo.php
+Allow: /team.php
+
+# Statische Ressourcen
+Allow: /css/
+Allow: /js/
+Allow: /img/
+Allow: /Cover/
+
+# Alles andere sperren
+Disallow: /admin
+Disallow: /config/
+Disallow: /includes/
+Disallow: /charts.php
+Disallow: /turnier.php
+Disallow: /sortieren.php
+Disallow: /jgj.php
+Disallow: /liga.php
+Disallow: /fuenf-filme.php
+Disallow: /film-einordnen.php
+Disallow: /zufallsduelle.php
+Disallow: /film.php
+Disallow: /rangliste.php
+Disallow: /meine-rangliste.php
+Disallow: /community-rangliste.php
+Disallow: /community-statistiken.php
+Disallow: /user-statistiken.php
+Disallow: /reset-password.php
+Disallow: /forgot-password.php
+Disallow: /logout.php
+Disallow: /import.php
+Disallow: /reset-testdaten.php
+
+Sitemap: https://filmbewertungen.markuskogler.de/sitemap.php

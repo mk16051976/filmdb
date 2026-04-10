@@ -1,0 +1,3 @@
+# Direkten HTTP-Zugriff auf alle Dateien im config/-Verzeichnis sperren.
+# Gilt für Apache auf Ionos Shared Hosting.
+Require all denied
